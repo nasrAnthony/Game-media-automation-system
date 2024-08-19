@@ -1,0 +1,11 @@
+logs/
+the mailman/
+example/
+email-automation/
+.vscode/
+.pytest_cache/
+__pycache__/
+sendemail.spec
+utils.py 
+service_account.json
+
