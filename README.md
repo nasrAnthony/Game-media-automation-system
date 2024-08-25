@@ -1,6 +1,8 @@
 # 📧 ****ZL Game Media To Email System**** 🎮
 
 
+## ****High level functional overview:****
+![image](https://github.com/user-attachments/assets/2212d357-16c3-4d84-a3eb-db740c99bc7d)
 
 ## ****Prerequisites:****
 
@@ -16,7 +18,6 @@ This is where all files should be sent from Google photos.
 <p align="center">
   Figure 1: Main Drive structure
 </p>
-	
 
 
 ### 2). Incoming media naming scheme:
