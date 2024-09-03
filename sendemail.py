@@ -110,7 +110,6 @@ def check_if_preferences_setup():
     If not, then it will prompt the user to enter a new set of credentials.
     """
     test= os.path.isfile("preferences.json")
-    meow=  4
     return test
 
 
