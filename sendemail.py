@@ -8,8 +8,9 @@ version 2.0
 import smtplib
 import getpass
 import re
+import os
 import portal_scraper
-import cross_checker
+import json
 import drive_file_parser
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -102,27 +103,77 @@ def move_folder(folder_id, new_parent_id, service):
     except Exception as e:
         print(f"Failed to move folder {folder_id}: {e}")
 
+def check_if_preferences_setup():
+    """
+    Checks if a preference.json file exists. 
+    If so, then it will use the existing login credentials saved in it. 
+    If not, then it will prompt the user to enter a new set of credentials.
+    """
+    test= os.path.isfile("preferences.json")
+    meow=  4
+    return test
+
+
+def log_user_in(server):
+    logged_in = False
+    login_attempts = 3
+    if check_if_preferences_setup():
+        try:
+            with open("preferences.json", "r") as file:
+                data = json.load(file)
+                email = data.get('email', None)
+                password = data.get('password', None)
+                server.login(email, password) #email log in goes here.
+                logged_in = True
+                print("-------LOGIN SUCCESSFUL-------")
+                return email
+        except Exception as e:
+            print("Failed to extract login credentials from preference file. Delete it and run the program again.")
+    else:
+        while(not logged_in):
+            try:
+                email = input("Enter you email address: ").strip()
+                password = getpass.getpass("Enter your password: ").strip()
+                server.login(email, password) #email log in goes here.
+                logged_in = True
+                print("-------LOGIN SUCCESSFUL-------")
+                valid_input = False
+                while(not valid_input):
+                    seeking_preferences = input("Would like to save login information? (y/n): ").strip()
+                    match seeking_preferences:
+                        case "y":
+                            data = {
+                                "email": email,
+                                "password": password
+                            }
+                            with open('preferences.json', 'w') as f:
+                                json.dump(data, f)
+                            valid_input = True
+                            return email
+                        case "n":
+                            valid_input = True
+                            return email
+                        case _ :
+                            print("Invalid input.")
+                            valid_input = False
+            except Exception:
+                login_attempts -= 1
+                if(login_attempts == 0):
+                    print("-------ERROR: LOGIN ATTEMPT FAILED. PLEASE RESTART THE PROGRAM.-------")
+                    #time.sleep(lock_duration_seconds)
+                    return #should maybe notify admin?
+                elif(login_attempts != 0):
+                    print(f"-------ERROR: LOGIN ATTEMPT {3-login_attempts} FAILED. You have {login_attempts} remaining.-------")
+    
+
 def send_email( games_list, master_log, subject = "Gameplay Footage"):
     server = smtplib.SMTP('smtp-mail.outlook.com', 587)
     server.starttls()
-    logged_in = False
-    login_attempts = 3
-    while(not logged_in):
-        try:
-            email = input("Enter you email address: ").strip()
-            password = getpass.getpass("Enter your password: ").strip()
-            server.login(email, password) #email log in goes here.
-            logged_in = True
-            print("-------LOGIN SUCCESSFUL-------")
-        except Exception:
-            login_attempts -= 1
-            if(login_attempts == 0):
-                print("-------ERROR: LOGIN ATTEMPT FAILED. PLEASE RESTART THE PROGRAM.-------")
-                #time.sleep(lock_duration_seconds)
-                return #should maybe notify admin?
-            elif(login_attempts != 0):
-                print(f"-------ERROR: LOGIN ATTEMPT {3-login_attempts} FAILED. You have {login_attempts} remaining.-------")
-    
+    try:
+        email = log_user_in(server)
+    except Exception as e:
+        print("Failed to login user.")
+        return
     for game in games_list:
         if not game.absorbed_flag and game.game_media_folder_link: #make sure it is not an absorbed game. and there is a link...
             #build email template:
@@ -140,7 +191,8 @@ def send_email( games_list, master_log, subject = "Gameplay Footage"):
                 msg.attach(img)
             for player_info in game.get_players():
                 customer_email = player_info[1]
-                msg['To'] = customer_email
+                #msg['To'] = customer_email
+                msg['To'] = "anthonyjnasr29@gmail.com"
                 message_body = msg.as_string()
                 try:
                     response = server.sendmail(msg['From'], msg['To'], message_body)
@@ -159,6 +211,7 @@ def send_email( games_list, master_log, subject = "Gameplay Footage"):
 
 if __name__ == '__main__':
     date_today = datetime.today().strftime("%d%m%Y") #get today's date to run script on
+    #date_today = "17082024"
     master_log = None
     current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log_dir = "logs"

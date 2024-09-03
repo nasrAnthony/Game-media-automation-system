@@ -162,11 +162,17 @@ def run_scraper(date, verbose= True):
 
     date_picker_display = web_driver.find_element(By.CSS_SELECTOR, ".display-value-container")
     date_picker_display.click()
-    date_picker_input = web_driver.find_element(By.ID, "Range")
-    desired_date = web_driver.find_element(By.CSS_SELECTOR, f"td[data-day='{date}']") # Replace with the correct data-day attribute
-    time.sleep(3)
+    #date_picker_input = web_driver.find_element(By.ID, "Range")
+    try:
+        desired_date = web_driver.find_element(By.CSS_SELECTOR, f"td[data-day='{date}']") #Replace with the correct data-day attribute
+    except Exception as e:
+        print(f"Desired date unreachable {date}. Today was used instead.")
+        date_today = datetime.today().strftime("%d%m%Y")
+        desired_date = web_driver.find_element(By.CSS_SELECTOR, f"td[data-day='{date_today}']") #Replace with the correct data-day attribute
+    
+    time.sleep(2)
     desired_date.click()
-    time.sleep(3)
+    time.sleep(2)
 
     data_ids = web_driver.find_elements(By.CSS_SELECTOR, "[data-id]")
 
